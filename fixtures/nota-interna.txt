@@ -1,0 +1,1 @@
+TRAVERSAL_DEMO_OK: documento ficticio fuera del directorio logs.

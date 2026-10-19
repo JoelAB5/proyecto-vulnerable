@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Parking · Laboratorio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header><div><span class="eyebrow">LABORATORIO SAST / DAST</span><h1>Smart Parking<span>●</span></h1><p>Control sencillo de entradas, espacios y cobros.</p></div><span class="badge">LOCAL · DATOS FICTICIOS</span></header>
+<main>
+  <div class="notice">Aplicación deliberadamente vulnerable para prácticas. Reiniciar el servidor borra los tickets.</div>
+  <section class="stats"><article><small>Espacios libres</small><strong>{{ 12 - activos|length }} <em>/ 12</em></strong></article><article><small>Vehículos dentro</small><strong>{{ activos|length }}</strong></article><article><small>Tarifa por hora iniciada</small><strong>${{ '%.2f'|format(tarifa) }}</strong></article></section>
+  {% if aviso %}<p class="message" role="status">{{ aviso }}</p>{% endif %}
+  <section class="panel"><div class="section-title"><h2>Disponibilidad del parqueo</h2><span>Asignación automática del primer espacio libre</span></div><div class="spaces">{% for n in range(1,13) %}<div class="space {{ 'busy' if n in ocupados else '' }}"><strong>P{{ '%02d'|format(n) }}</strong><small>{{ 'Ocupado' if n in ocupados else 'Libre' }}</small></div>{% endfor %}</div></section>
+  <section class="columns"><article class="panel"><h2>Registrar entrada</h2><form action="/entrada" method="post"><label for="placa">Placa del vehículo</label><input id="placa" name="placa" placeholder="ABC-1234" required maxlength="12"><button>Asignar espacio</button></form></article><article class="panel"><h2>Vehículos activos</h2><div class="table-wrap"><table><thead><tr><th>Placa</th><th>Espacio</th><th>Entrada</th><th>Acción</th></tr></thead><tbody>{% for t in activos %}<tr><td>{{ t[1] }}</td><td>P{{ '%02d'|format(t[2]) }}</td><td>{{ t[3][11:] }}</td><td><form action="/salida" method="post"><input type="hidden" name="ticket" value="{{ t[0] }}"><button class="secondary">Cobrar salida</button></form></td></tr>{% else %}<tr><td colspan="4">Sin vehículos registrados.</td></tr>{% endfor %}</tbody></table></div></article></section>
+  <section class="panel"><h2>Últimas salidas</h2><div class="table-wrap"><table><thead><tr><th>Ticket</th><th>Placa</th><th>Salida</th><th>Total</th></tr></thead><tbody>{% for t in historial %}<tr><td>#{{ t[0] }}</td><td>{{ t[1] }}</td><td>{{ t[4] }}</td><td>${{ '%.2f'|format(t[5]) }}</td></tr>{% else %}<tr><td colspan="4">Aún no hay cobros.</td></tr>{% endfor %}</tbody></table></div></section>
+  <div class="section-title lab-title"><h2>Herramientas del operador</h2><span>6 vulnerabilidades documentadas en README.md</span></div>
+  <section class="tools">
+    <article class="panel"><small class="tag">V01 · Credenciales incrustadas</small><h3>Integración de cámara</h3><p>La cámara simulada utiliza una clave fija en el código fuente.</p><code>GET /api/camara</code><p>Cabecera: <code>X-Camera-Key</code></p><p>Revisa app.py para encontrar la clave de demostración.</p></article>
+    <article class="panel"><small class="tag">V02 · SQL Injection</small><h3>Acceso de operador</h3><form action="/login" method="post"><label>Usuario<input name="usuario" value="admin"></label><label>Contraseña<input name="contrasena" type="password"></label><button>Verificar acceso</button></form>{% if login_msg is defined %}<pre>{{ login_msg }}</pre>{% endif %}<small>Demuestra la validación de acceso; no crea una sesión.</small></article>
+    <article class="panel"><small class="tag">V03 · XSS reflejado</small><h3>Consultar matrícula</h3><form action="/buscar_placa" method="get"><label>Matrícula<input name="placa" value="ABC-1234"></label><button>Consultar</button></form>{% if search_result is defined %}<div class="result">{{ search_result|safe }}</div>{% endif %}</article>
+    <article class="panel"><small class="tag">V04 · Inyección de comandos</small><h3>Diagnóstico de cámara</h3><form action="/ping_camara" method="post"><label>Dirección IP<input name="ip" value="127.0.0.1"></label><button>Comprobar conexión</button></form>{% if ping_result is defined %}<pre>{{ ping_result }}</pre>{% endif %}</article>
+    <article class="panel"><small class="tag">V05 · Path Traversal</small><h3>Registro de barrera</h3><form action="/ver_log" method="get"><label>Archivo de registro<input name="file" value="barrera.log"></label><button>Leer registro</button></form>{% if file_result is defined %}<pre>{{ file_result }}</pre>{% endif %}</article>
+    <article class="panel"><small class="tag">V06 · SSRF</small><h3>Consultar comprobante</h3><form action="/validar_pago" method="post"><label>URL del comprobante<input name="url" value="http://127.0.0.1:5001/recibo.txt"></label><button>Validar pago</button></form>{% if ssrf_result is defined %}<pre>{{ ssrf_result }}</pre>{% endif %}<small>La consulta es una simulación; no procesa pagos ni cambia los cobros.</small></article>
+  </section>
+</main><footer>Smart Parking · Laboratorio educativo · Python + Flask + SQLite en memoria</footer>
+</body></html>
