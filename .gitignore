@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+reports/
+instance/
+.env
+*.pyc
+respaldo-original-*/
