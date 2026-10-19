@@ -115,14 +115,14 @@ def ping_camara():
     ip = request.form.get("ip", "127.0.0.1")
     # Cámaras registradas de demostración: el usuario no construye el comando.
     flags = ["-n", "1", "-w", "1000"] if os.name == "nt" else ["-c", "1", "-W", "1"]
-    comandos = {
-        "127.0.0.1": ["ping", *flags, "127.0.0.1"],
-        "::1": ["ping", *flags, "::1"],
-    }
-    if ip not in comandos:
+    if ip == "127.0.0.1":
+        comando = ["ping", *flags, "127.0.0.1"]
+    elif ip == "::1":
+        comando = ["ping", *flags, "::1"]
+    else:
         return page(ping_result="Cámara no registrada. Usa 127.0.0.1 o ::1."), 400
     try:
-        result = subprocess.run(comandos[ip], shell=False, capture_output=True,
+        result = subprocess.run(comando, shell=False, capture_output=True,
                                 text=True, errors="replace", timeout=4)
         salida = result.stdout + result.stderr
     except subprocess.TimeoutExpired:
